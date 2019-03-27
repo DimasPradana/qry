@@ -198,10 +198,12 @@ select
                     and kel.kd_kelurahan=penerimaan.kd_kelurahan
                     group by kel.KD_KECAMATAN,kel.kd_kelurahan,kel.nm_kelurahan;
 ```
-<summary>tes</summary>
+## collapsible markdown
+<details><summary>tes</summary>
 <p>
+#### it is
 ```sql
 select * from sppt
 ```
 </p>
-```
+</details>
