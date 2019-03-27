@@ -286,3 +286,22 @@ select *
 from view_sppt_op
 where kd_kecamatan=150 and status_pembayaran_sppt <> 1
 ```
+
+* menu monitoring - tunggakan summmary per kecamatan
+```sql
+select
+                    kel.kd_kelurahan,
+                    kel.nm_kelurahan,
+                    nvl(sum(penerimaan.stts),0) as stts,
+                    nvl(sum(penerimaan.pokok),0) as pokok
+                    from (select * from ref_kelurahan where kd_kecamatan='080') kel left join
+                    (select kd_propinsi,kd_dati2,kd_kecamatan,kd_kelurahan,count(*) as stts,sum(pbb_yg_harus_dibayar_sppt) as pokok from view_sppt_op
+                    where status_pembayaran_sppt <> 1
+                    and thn_pajak_sppt='2019' and kd_kecamatan='080' group by kd_propinsi,kd_dati2,kd_kecamatan,kd_kelurahan)
+                    penerimaan
+                    on kel.kd_propinsi=penerimaan.kd_propinsi
+                    and kel.kd_dati2=penerimaan.kd_dati2
+                    and kel.kd_kecamatan=penerimaan.kd_kecamatan
+                    and kel.kd_kelurahan=penerimaan.kd_kelurahan
+                    group by kel.kd_kelurahan,kel.nm_kelurahan order by kel.kd_kelurahan
+```
