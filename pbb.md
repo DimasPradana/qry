@@ -198,9 +198,22 @@ select
                     and kel.kd_kelurahan=penerimaan.kd_kelurahan
                     group by kel.KD_KECAMATAN,kel.kd_kelurahan,kel.nm_kelurahan;
 ```
-## collapsible markdown
-<details><summary>tes</summary>
+
+* ambil BAKU_WP & BAKU_NOMINAL 1 KABUPATEN
 ```sql
-select * from sppt
+select count(s.KD_PROPINSI) as WP, sum(s.PBB_YG_HARUS_DIBAYAR_SPPT) as NOMINAL, s.KD_KECAMATAN, s.KD_KELURAHAN, k.NM_KECAMATAN , k.NM_KELURAHAN
+from SPPT s
+left join VIEW_KELURAHAN k on s.KD_PROPINSI = k.KD_PROPINSI and
+        s.KD_DATI2 = k.KD_DATI2 and
+        s.KD_KECAMATAN = k.KD_KECAMATAN and
+        s.KD_KELURAHAN = k.KD_KELURAHAN
+where s.THN_PAJAK_SPPT=2018
+group by s.KD_KECAMATAN, s.KD_KELURAHAN,k.NM_KECAMATAN, k.NM_KELURAHAN;
 ```
-</details>
+
+* ambil nomor urut max per blok
+```sql
+select max(s.NO_URUT)
+from SPPT s
+where s.KD_KECAMATAN=080, s.KD_KELURAHAN=001, s.KD_BLOK=001
+```
