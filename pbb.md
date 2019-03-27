@@ -217,3 +217,69 @@ select max(s.NO_URUT)
 from SPPT s
 where s.KD_KECAMATAN=080, s.KD_KELURAHAN=001, s.KD_BLOK=001
 ```
+* tunggakan detail per kelurahan
+```sql
+select *
+from view_sppt_op
+where kd_kecamatan=020 and status_pembayaran_sppt <> 1
+union
+select *
+from view_sppt_op
+where kd_kecamatan=030 and status_pembayaran_sppt <> 1
+union
+select *
+from view_sppt_op
+where kd_kecamatan=031 and status_pembayaran_sppt <> 1
+union
+select *
+from view_sppt_op
+where kd_kecamatan=040 and status_pembayaran_sppt <> 1
+union
+select *
+from view_sppt_op
+where kd_kecamatan=050 and status_pembayaran_sppt <> 1
+union
+select *
+from view_sppt_op
+where kd_kecamatan=051 and status_pembayaran_sppt <> 1
+union
+select *
+from view_sppt_op
+where kd_kecamatan=060 and status_pembayaran_sppt <> 1
+union
+select *
+from view_sppt_op
+where kd_kecamatan=070 and status_pembayaran_sppt <> 1
+union
+select *
+from view_sppt_op
+where kd_kecamatan=080 and status_pembayaran_sppt <> 1
+union
+select *
+from view_sppt_op
+where kd_kecamatan=090 and status_pembayaran_sppt <> 1
+union
+select *
+from view_sppt_op
+where kd_kecamatan=100 and status_pembayaran_sppt <> 1
+union
+select *
+from view_sppt_op
+where kd_kecamatan=111 and status_pembayaran_sppt <> 1
+union
+select *
+from view_sppt_op
+where kd_kecamatan=120 and status_pembayaran_sppt <> 1
+union
+select *
+from view_sppt_op
+where kd_kecamatan=130 and status_pembayaran_sppt <> 1
+union
+select *
+from view_sppt_op
+where kd_kecamatan=140 and status_pembayaran_sppt <> 1
+union
+select *
+from view_sppt_op
+where kd_kecamatan=150 and status_pembayaran_sppt <> 1
+```
