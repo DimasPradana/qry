@@ -1,4 +1,4 @@
-# query pbb
+# QUERY PBB
  * ambil NOP dari WP yang melakukan pembayaran atau melakukan pelunasan dari tahun 2014 sampai 2018 (5 tahun)
 ```sql
 select a.KD_PROPINSI,a.KD_DATI2,a.KD_KECAMATAN,a.KD_KELURAHAN,a.KD_BLOK,a.NO_URUT,a.KD_JNS_OP,
