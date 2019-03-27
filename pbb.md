@@ -217,7 +217,7 @@ group by s.KD_KECAMATAN, s.KD_KELURAHAN,k.NM_KECAMATAN, k.NM_KELURAHAN;
 ```sql
 select max(s.NO_URUT)
 from SPPT s
-where s.KD_KECAMATAN=080, s.KD_KELURAHAN=001, s.KD_BLOK=001
+where s.KD_KECAMATAN=080, s.KD_KELURAHAN=001, s.KD_BLOK=001;
 ```
 
 * tunggakan detail per kelurahan
