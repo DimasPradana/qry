@@ -198,3 +198,10 @@ select
                     and kel.kd_kelurahan=penerimaan.kd_kelurahan
                     group by kel.KD_KECAMATAN,kel.kd_kelurahan,kel.nm_kelurahan;
 ```
+<summary>tes</summary>
+<p>
+```sql
+select * from sppt
+```
+</p>
+```
