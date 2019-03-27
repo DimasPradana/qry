@@ -14,12 +14,14 @@ where b.THN_PAJAK_SPPT between '2014' and '2018'
 group by a.KD_PROPINSI,a.KD_DATI2,a.KD_KECAMATAN,a.KD_KELURAHAN,a.KD_BLOK,a.NO_URUT,a.KD_JNS_OP
 having count(*) = 5;
 ```
+
 * ambil tagihan pbb tahun pajak 2018
 ```sql
 select a.KD_PROPINSI||'-'||a.KD_DATI2||'-'||a.KD_KECAMATAN||'-'||a.KD_KELURAHAN||'-'||a.KD_BLOK||'-'||a.NO_URUT||'-'||a.KD_JNS_OP as NOP, a.PBB_YG_HARUS_DIBAYAR_SPPT
 from sppt a
 where a.THN_PAJAK_SPPT=2018;
 ```
+
 * query menu monitoring - penerimaan pembayaran per wilayah
 ```sql
 select
@@ -217,6 +219,7 @@ select max(s.NO_URUT)
 from SPPT s
 where s.KD_KECAMATAN=080, s.KD_KELURAHAN=001, s.KD_BLOK=001
 ```
+
 * tunggakan detail per kelurahan
 ```sql
 select *
