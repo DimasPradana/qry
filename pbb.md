@@ -201,7 +201,6 @@ select
 ## collapsible markdown
 <details><summary>tes</summary>
 <p>
-#### it is
 ```sql
 select * from sppt
 ```
