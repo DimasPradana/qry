@@ -305,3 +305,61 @@ select
                     and kel.kd_kelurahan=penerimaan.kd_kelurahan
                     group by kel.kd_kelurahan,kel.nm_kelurahan order by kel.kd_kelurahan
 ```
+
+* cari NOP selisih pembayaran yg belum ter-flag oleh sistem
+```sql
+select sum(s.PBB_YG_HARUS_DIBAYAR_SPPT) as jumlah, count(s.KD_PROPINSI) as sppt
+from PEMBAYARAN_SPPT p
+left join SPPT s on s.KD_PROPINSI = p.KD_PROPINSI and
+                    s.KD_DATI2 = p.KD_DATI2 and
+                    s.KD_KECAMATAN = p.KD_KECAMATAN and
+                    s.KD_KELURAHAN = p.KD_KELURAHAN and
+                    s.KD_BLOK = p. KD_BLOK and
+                    s.NO_URUT = p.NO_URUT and
+                    s.KD_JNS_OP = p.KD_JNS_OP and
+                    s.THN_PAJAK_SPPT = p.THN_PAJAK_SPPT
+where s.STATUS_PEMBAYARAN_SPPT = 0 and
+      /*s.KD_KECAMATAN = 110 and
+      s.KD_KELURAHAN = 005 and*/
+      p.THN_PAJAK_SPPT = 2018 and
+      p.TGL_PEMBAYARAN_SPPT between to_date('2018-01-01', 'yyyy-mm-dd') and to_date('2018-12-31', 'yyyy-mm-dd');
+
+// atau
+select *
+from PEMBAYARAN_SPPT p
+left join SPPT s on s.KD_PROPINSI = p.KD_PROPINSI and
+                    s.KD_DATI2 = p.KD_DATI2 and
+                    s.KD_KECAMATAN = p.KD_KECAMATAN and
+                    s.KD_KELURAHAN = p.KD_KELURAHAN and
+                    s.KD_BLOK = p. KD_BLOK and
+                    s.NO_URUT = p.NO_URUT and
+                    s.KD_JNS_OP = p.KD_JNS_OP and
+                    s.THN_PAJAK_SPPT = p.THN_PAJAK_SPPT
+where s.STATUS_PEMBAYARAN_SPPT = 0 and
+      s.KD_KECAMATAN = 110 and
+      s.KD_KELURAHAN = 005 and
+      p.THN_PAJAK_SPPT = 2018 and
+      p.TGL_PEMBAYARAN_SPPT between to_date('2018-01-01', 'yyyy-mm-dd') and to_date('2018-12-31', 'yyyy-mm-dd');
+
+// eksekusi
+update sppt s
+set s.STATUS_PEMBAYARAN_SPPT = 1
+where exists(
+    select *
+    from PEMBAYARAN_SPPT p
+    left join SPPT s on s.KD_PROPINSI = p.KD_PROPINSI and
+                    s.KD_DATI2 = p.KD_DATI2 and
+                    s.KD_KECAMATAN = p.KD_KECAMATAN and
+                    s.KD_KELURAHAN = p.KD_KELURAHAN and
+                    s.KD_BLOK = p. KD_BLOK and
+                    s.NO_URUT = p.NO_URUT and
+                    s.KD_JNS_OP = p.KD_JNS_OP and
+                    s.THN_PAJAK_SPPT = p.THN_PAJAK_SPPT
+    where s.STATUS_PEMBAYARAN_SPPT = 0 and
+          s.KD_KECAMATAN = 110 and
+          s.KD_KELURAHAN = 005 and
+          p.THN_PAJAK_SPPT = 2018 and
+          p.TGL_PEMBAYARAN_SPPT between to_date('2018-01-01', 'yyyy-mm-dd') and
+              to_date('2018-12-31', 'yyyy-mm-dd'));
+
+```
