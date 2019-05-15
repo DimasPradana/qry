@@ -424,3 +424,93 @@ from (((
     left join `e-pajak`.`tarif_dasar_pajak` on((`e-pajak`.`sptpd`.`ObyekPajak` = `e-pajak`.`tarif_dasar_pajak`.`NoID`)))
 where ((`e-pajak`.`skp`.`keterangan` = 0) and (`e-pajak`.`skp`.`Aktif` = 1))
 ```
+* query reklame, hotel, rumah makan pake masa2, lainnya pake tanggal
+  entri
+```sql
+select concat('35129990', substr(`e-pajak`.`skp`.`TanggalEntri`, 1, 4), '9', `e-pajak`.`skp`.`Nomor_SKPRD`)                            AS `Nop`,
+       `e-pajak`.`npwpd`.`NamaWP`                                                                                                      AS `Nama`,
+       `e-pajak`.`npwpd`.`AlamatWP`                                                                                                    AS `Alamat`,
+       date_format(now(), '%m')                                                                                                        AS `Masa`,
+       date_format(now(), '%Y')                                                                                                        AS `Tahun`,
+       concat(`e-pajak`.`skp`.`Nomor_SKPRD`, '/431.302.2.3/',
+              substr(`e-pajak`.`skp`.`TanggalEntri`, 1, 4))                                                                            AS `NoSK`,
+       if(((`e-pajak`.`tarif_dasar_pajak`.`RekeningInduk` like '4.1.1.02.%') or
+           (`e-pajak`.`tarif_dasar_pajak`.`RekeningInduk` like '4.1.1.01.%') or
+           (`e-pajak`.`tarif_dasar_pajak`.`RekeningInduk` like '4.1.1.04.%')),
+          date_format(`e-pajak`.`skp`.`masa2`, '%d%m%Y'),
+          date_format(`e-pajak`.`skp`.`TanggalEntri`, '%d%m%Y'))                                                                       AS `JatuhTempo`,
+       date_format(now(), '%d%m%Y')                                                                                                    AS `TanggalSekarang`,
+       if((timestampdiff(MONTH, `e-pajak`.`skp`.`masa2`, now()) <= 0), 0, if(
+               ((`e-pajak`.`tarif_dasar_pajak`.`RekeningInduk` like '4.1.1.02.%') or
+                (`e-pajak`.`tarif_dasar_pajak`.`RekeningInduk` like '4.1.1.01.%') or
+                (`e-pajak`.`tarif_dasar_pajak`.`RekeningInduk` like '4.1.1.04.%')),
+               timestampdiff(MONTH, `e-pajak`.`skp`.`masa2`, now()),
+               timestampdiff(MONTH, `e-pajak`.`skp`.`TanggalEntri`, now())))                                                           AS `Selisih`,
+       `e-pajak`.`tarif_dasar_pajak`.`RekeningInduk`                                                                                   AS `KodeRekening`,
+       trim(trailing '.00' from `e-pajak`.`sptpd`.`JumlahPajak`)                                                                       AS `Pokok`,
+       trim(trailing '.00' from if((timestampdiff(MONTH, `e-pajak`.`skp`.`masa2`, now()) <= 0), 0, ((if(
+                                                                                                             ((`e-pajak`.`tarif_dasar_pajak`.`RekeningInduk` like '4.1.1.02.%') or
+                                                                                                              (`e-pajak`.`tarif_dasar_pajak`.`RekeningInduk` like '4.1.1.01.%') or
+                                                                                                              (`e-pajak`.`tarif_dasar_pajak`.`RekeningInduk` like '4.1.1.04.%')),
+                                                                                                             timestampdiff(MONTH, `e-pajak`.`skp`.`masa2`, now()),
+                                                                                                             timestampdiff(MONTH, `e-pajak`.`skp`.`TanggalEntri`, now())) *
+                                                                                                     0.02) *
+                                                                                                    `e-pajak`.`sptpd`.`JumlahPajak`))) AS `Denda`,
+       trim(trailing '.00' from (if((timestampdiff(MONTH, `e-pajak`.`skp`.`masa2`, now()) <= 0), 0, ((if(
+                                                                                                              ((`e-pajak`.`tarif_dasar_pajak`.`RekeningInduk` like '4.1.1.02.%') or
+                                                                                                               (`e-pajak`.`tarif_dasar_pajak`.`RekeningInduk` like '4.1.1.01.%') or
+                                                                                                               (`e-pajak`.`tarif_dasar_pajak`.`RekeningInduk` like '4.1.1.04.%')),
+                                                                                                              timestampdiff(MONTH, `e-pajak`.`skp`.`masa2`, now()),
+                                                                                                              timestampdiff(MONTH, `e-pajak`.`skp`.`TanggalEntri`, now())) *
+                                                                                                      0.02) *
+                                                                                                     `e-pajak`.`sptpd`.`JumlahPajak`)) +
+                                 `e-pajak`.`sptpd`.`JumlahPajak`))                                                                     AS `Total`,
+       `e-pajak`.`skp`.`Lunas`                                                                                                         AS `Lunas`
+from (((`e-pajak`.`skp` left join `e-pajak`.`sptpd` on ((`e-pajak`.`skp`.`Nomor_SPTPD` = `e-pajak`.`sptpd`.`NoID`))) left join `e-pajak`.`npwpd` on ((`e-pajak`.`sptpd`.`NPWPD` = `e-pajak`.`npwpd`.`NPWPD`)))
+         left join `e-pajak`.`tarif_dasar_pajak`
+                   on ((`e-pajak`.`sptpd`.`ObyekPajak` = `e-pajak`.`tarif_dasar_pajak`.`NoID`)))
+where ((`e-pajak`.`skp`.`keterangan` = 0) and (`e-pajak`.`skp`.`Aktif` = 1));
+select concat('35129990', substr(`e-pajak`.`skp`.`TanggalEntri`, 1, 4), '9', `e-pajak`.`skp`.`Nomor_SKPRD`)                            AS `Nop`,
+       `e-pajak`.`npwpd`.`NamaWP`                                                                                                      AS `Nama`,
+       `e-pajak`.`npwpd`.`AlamatWP`                                                                                                    AS `Alamat`,
+       date_format(now(), '%m')                                                                                                        AS `Masa`,
+       date_format(now(), '%Y')                                                                                                        AS `Tahun`,
+       concat(`e-pajak`.`skp`.`Nomor_SKPRD`, '/431.302.2.3/',
+              substr(`e-pajak`.`skp`.`TanggalEntri`, 1, 4))                                                                            AS `NoSK`,
+       if(((`e-pajak`.`tarif_dasar_pajak`.`RekeningInduk` like '4.1.1.02.%') or
+           (`e-pajak`.`tarif_dasar_pajak`.`RekeningInduk` like '4.1.1.01.%') or
+           (`e-pajak`.`tarif_dasar_pajak`.`RekeningInduk` like '4.1.1.04.%')),
+          date_format(`e-pajak`.`skp`.`masa2`, '%d%m%Y'),
+          date_format(`e-pajak`.`skp`.`TanggalEntri`, '%d%m%Y'))                                                                       AS `JatuhTempo`,
+       date_format(now(), '%d%m%Y')                                                                                                    AS `TanggalSekarang`,
+       if((timestampdiff(MONTH, `e-pajak`.`skp`.`masa2`, now()) <= 0), 0, if(
+               ((`e-pajak`.`tarif_dasar_pajak`.`RekeningInduk` like '4.1.1.02.%') or
+                (`e-pajak`.`tarif_dasar_pajak`.`RekeningInduk` like '4.1.1.01.%') or
+                (`e-pajak`.`tarif_dasar_pajak`.`RekeningInduk` like '4.1.1.04.%')),
+               timestampdiff(MONTH, `e-pajak`.`skp`.`masa2`, now()),
+               timestampdiff(MONTH, `e-pajak`.`skp`.`TanggalEntri`, now())))                                                           AS `Selisih`,
+       `e-pajak`.`tarif_dasar_pajak`.`RekeningInduk`                                                                                   AS `KodeRekening`,
+       trim(trailing '.00' from `e-pajak`.`sptpd`.`JumlahPajak`)                                                                       AS `Pokok`,
+       trim(trailing '.00' from if((timestampdiff(MONTH, `e-pajak`.`skp`.`masa2`, now()) <= 0), 0, ((if(
+                                                                                                             ((`e-pajak`.`tarif_dasar_pajak`.`RekeningInduk` like '4.1.1.02.%') or
+                                                                                                              (`e-pajak`.`tarif_dasar_pajak`.`RekeningInduk` like '4.1.1.01.%') or
+                                                                                                              (`e-pajak`.`tarif_dasar_pajak`.`RekeningInduk` like '4.1.1.04.%')),
+                                                                                                             timestampdiff(MONTH, `e-pajak`.`skp`.`masa2`, now()),
+                                                                                                             timestampdiff(MONTH, `e-pajak`.`skp`.`TanggalEntri`, now())) *
+                                                                                                     0.02) *
+                                                                                                    `e-pajak`.`sptpd`.`JumlahPajak`))) AS `Denda`,
+       trim(trailing '.00' from (if((timestampdiff(MONTH, `e-pajak`.`skp`.`masa2`, now()) <= 0), 0, ((if(
+                                                                                                              ((`e-pajak`.`tarif_dasar_pajak`.`RekeningInduk` like '4.1.1.02.%') or
+                                                                                                               (`e-pajak`.`tarif_dasar_pajak`.`RekeningInduk` like '4.1.1.01.%') or
+                                                                                                               (`e-pajak`.`tarif_dasar_pajak`.`RekeningInduk` like '4.1.1.04.%')),
+                                                                                                              timestampdiff(MONTH, `e-pajak`.`skp`.`masa2`, now()),
+                                                                                                              timestampdiff(MONTH, `e-pajak`.`skp`.`TanggalEntri`, now())) *
+                                                                                                      0.02) *
+                                                                                                     `e-pajak`.`sptpd`.`JumlahPajak`)) +
+                                 `e-pajak`.`sptpd`.`JumlahPajak`))                                                                     AS `Total`,
+       `e-pajak`.`skp`.`Lunas`                                                                                                         AS `Lunas`
+from (((`e-pajak`.`skp` left join `e-pajak`.`sptpd` on ((`e-pajak`.`skp`.`Nomor_SPTPD` = `e-pajak`.`sptpd`.`NoID`))) left join `e-pajak`.`npwpd` on ((`e-pajak`.`sptpd`.`NPWPD` = `e-pajak`.`npwpd`.`NPWPD`)))
+         left join `e-pajak`.`tarif_dasar_pajak`
+                   on ((`e-pajak`.`sptpd`.`ObyekPajak` = `e-pajak`.`tarif_dasar_pajak`.`NoID`)))
+where ((`e-pajak`.`skp`.`keterangan` = 0) and (`e-pajak`.`skp`.`Aktif` = 1));
+```
