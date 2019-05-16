@@ -388,9 +388,10 @@ where s.PBB_YG_HARUS_DIBAYAR_SPPT <> p.JML_SPPT_YG_DIBAYAR - p.DENDA_SPPT and
 order by NOP,tahun,siklus_bayar asc;
 ```
 
-* update tanggal bayar skp
+* update tanggal bayar sppt
 ```sql
 /*update tgl bayar di sppt*/
+// TODO langsung update lunas kalo di pembayaran sudah ada
 update sppt s
 set s.TGL_PEMBAYARAN_SPPT = (
     select p.TGL_PEMBAYARAN_SPPT
