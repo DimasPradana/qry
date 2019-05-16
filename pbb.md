@@ -386,3 +386,46 @@ where s.PBB_YG_HARUS_DIBAYAR_SPPT <> p.JML_SPPT_YG_DIBAYAR - p.DENDA_SPPT and
       s.STATUS_PEMBAYARAN_SPPT=1 and
       p.JML_SPPT_YG_DIBAYAR is not null
 order by NOP,tahun,siklus_bayar asc;
+```
+
+* update tanggal bayar skp
+```sql
+/*update tgl bayar di sppt*/
+update sppt s
+set s.TGL_PEMBAYARAN_SPPT = (
+    select p.TGL_PEMBAYARAN_SPPT
+    from PEMBAYARAN_SPPT p
+    where p.KD_PROPINSI=s.KD_PROPINSI and
+          p.KD_DATI2=s.KD_DATI2 and
+          p.KD_KECAMATAN=s.KD_KECAMATAN and
+          p.KD_KELURAHAN=s.KD_KELURAHAN and
+          p.KD_BLOK=s.KD_BLOK and
+          p.NO_URUT=s.NO_URUT and
+          p.KD_JNS_OP=s.KD_JNS_OP and
+          p.THN_PAJAK_SPPT=s.THN_PAJAK_SPPT and
+          p.THN_PAJAK_SPPT =2018 and
+          p.KD_KECAMATAN=080
+    )
+where EXISTS(
+    select p.TGL_PEMBAYARAN_SPPT
+    from PEMBAYARAN_SPPT p
+    where p.KD_PROPINSI=s.KD_PROPINSI and
+          p.KD_DATI2=s.KD_DATI2 and
+          p.KD_KECAMATAN=s.KD_KECAMATAN and
+          p.KD_KELURAHAN=s.KD_KELURAHAN and
+          p.KD_BLOK=s.KD_BLOK and
+          p.NO_URUT=s.NO_URUT and
+          p.KD_JNS_OP=s.KD_JNS_OP and
+          p.THN_PAJAK_SPPT=s.THN_PAJAK_SPPT and
+          p.THN_PAJAK_SPPT =2018 and
+          p.KD_KECAMATAN=080);
+
+/*check*/
+select count(*)
+from sppt where KD_KECAMATAN=080 and THN_PAJAK_SPPT=2018 and STATUS_PEMBAYARAN_SPPT =1;
+
+/*update status nol jadi 1 dari tgl bayar di sppt*/
+update SPPT s
+set s.STATUS_PEMBAYARAN_SPPT = 1
+where s.TGL_PEMBAYARAN_SPPT is not null and s.KD_KECAMATAN=090 and s.THN_PAJAK_SPPT=2018 and s.STATUS_PEMBAYARAN_SPPT=0;
+```
