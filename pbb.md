@@ -367,7 +367,12 @@ where exists(
 * mencari pembayaran yg nominal nya tidak sama dengan tagihan di SPPT
 ```sql
 select s.KD_PROPINSI||s.KD_DATI2||s.KD_KECAMATAN||s.KD_KELURAHAN||s.KD_BLOK||s.NO_URUT||s.KD_JNS_OP as NOP,
-       p.THN_PAJAK_SPPT as tahun, s.PBB_YG_HARUS_DIBAYAR_SPPT as SPPT, p.JML_SPPT_YG_DIBAYAR as pembayaran, p.DENDA_SPPT as denda, p.PEMBAYARAN_SPPT_KE as siklus_bayar
+       p.THN_PAJAK_SPPT as tahun,
+       s.PBB_YG_HARUS_DIBAYAR_SPPT as SPPT,
+       p.JML_SPPT_YG_DIBAYAR as pembayaran,
+       p.DENDA_SPPT as denda,
+       p.PEMBAYARAN_SPPT_KE as siklus_bayar,
+       p.TGL_PEMBAYARAN_SPPT as tgl_bayar
 from SPPT s
 left join PEMBAYARAN_SPPT p on s.KD_PROPINSI=p.KD_PROPINSI and
                                s.KD_DATI2=p.KD_DATI2 and
@@ -377,6 +382,7 @@ left join PEMBAYARAN_SPPT p on s.KD_PROPINSI=p.KD_PROPINSI and
                                s.NO_URUT=p.NO_URUT and
                                s.KD_JNS_OP=p.KD_JNS_OP and
                                s.THN_PAJAK_SPPT=p.THN_PAJAK_SPPT
-where s.PBB_YG_HARUS_DIBAYAR_SPPT <> p.JML_SPPT_YG_DIBAYAR - p.DENDA_SPPT and s.STATUS_PEMBAYARAN_SPPT=1 and p.JML_SPPT_YG_DIBAYAR is not null
+where s.PBB_YG_HARUS_DIBAYAR_SPPT <> p.JML_SPPT_YG_DIBAYAR - p.DENDA_SPPT and
+      s.STATUS_PEMBAYARAN_SPPT=1 and
+      p.JML_SPPT_YG_DIBAYAR is not null
 order by NOP,tahun,siklus_bayar asc;
-```
