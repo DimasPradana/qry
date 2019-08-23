@@ -324,7 +324,7 @@ where s.STATUS_PEMBAYARAN_SPPT = 0 and
       p.THN_PAJAK_SPPT = 2018 and
       p.TGL_PEMBAYARAN_SPPT between to_date('2018-01-01', 'yyyy-mm-dd') and to_date('2018-12-31', 'yyyy-mm-dd');
 
-// atau
+-- atau
 select *
 from PEMBAYARAN_SPPT p
 left join SPPT s on s.KD_PROPINSI = p.KD_PROPINSI and
@@ -390,8 +390,8 @@ order by NOP,tahun,siklus_bayar asc;
 
 * update tanggal bayar sppt
 ```sql
-/*update tgl bayar di sppt*/
-// TODO langsung update lunas kalo di pembayaran sudah ada
+-- update tgl bayar di sppt
+-- TODO langsung update lunas kalo di pembayaran sudah ada
 update sppt s
 set s.TGL_PEMBAYARAN_SPPT = (
     select p.TGL_PEMBAYARAN_SPPT
@@ -421,12 +421,241 @@ where EXISTS(
           p.THN_PAJAK_SPPT =2018 and
           p.KD_KECAMATAN=080);
 
-/*check*/
+-- check
 select count(*)
 from sppt where KD_KECAMATAN=080 and THN_PAJAK_SPPT=2018 and STATUS_PEMBAYARAN_SPPT =1;
 
-/*update status nol jadi 1 dari tgl bayar di sppt*/
+-- update status nol jadi 1 dari tgl bayar di sppt
 update SPPT s
 set s.STATUS_PEMBAYARAN_SPPT = 1
 where s.TGL_PEMBAYARAN_SPPT is not null and s.KD_KECAMATAN=090 and s.THN_PAJAK_SPPT=2018 and s.STATUS_PEMBAYARAN_SPPT=0;
+```
+
+* query menu tunggakan detail kelurahan
+```sql
+-- verifikasi PBB detail kelurahan
+select *
+from view_sppt_op
+where kd_kecamatan=050
+    and kd_kelurahan=005
+    and status_pembayaran_sppt <> 1
+    and thn_pajak_sppt=2014
+union
+select *
+from view_sppt_op
+where
+    kd_kecamatan=050
+    and kd_kelurahan=005
+    and thn_pajak_sppt=2014
+    AND KD_PROPINSI||KD_DATI2||KD_KECAMATAN||KD_KELURAHAN||KD_BLOK||NO_URUT||KD_JNS_OP||THN_PAJAK_SPPT
+    IN (SELECT
+                KD_PROPINSI||KD_DATI2||KD_KECAMATAN||KD_KELURAHAN||KD_BLOK||NO_URUT||KD_JNS_OP||THN_PAJAK_SPPT
+        FROM PEMBAYARAN_SPPT
+        WHERE kd_kecamatan=050
+                and kd_kelurahan=005 and thn_pajak_sppt=2014 AND TGL_PEMBAYARAN_SPPT > TO_DATE('31/12/2018','DD/MM/YYYY'));
+-- verifikasi PBB all kabupaten
+select *
+from view_sppt_op
+where
+    status_pembayaran_sppt <> 1
+union
+select *
+from view_sppt_op
+where
+    KD_PROPINSI||KD_DATI2||KD_KECAMATAN||KD_KELURAHAN||KD_BLOK||NO_URUT||KD_JNS_OP||THN_PAJAK_SPPT
+    IN (SELECT
+               KD_PROPINSI||KD_DATI2||KD_KECAMATAN||KD_KELURAHAN||KD_BLOK||NO_URUT||KD_JNS_OP||THN_PAJAK_SPPT
+        FROM PEMBAYARAN_SPPT
+    WHERE TGL_PEMBAYARAN_SPPT > TO_DATE('31/12/2018','DD/MM/YYYY'));
+```
+
+
+* menu monitoring - tunggakan semua kecamatan
+```sql
+
+select
+       kel.kd_kelurahan,
+       kel.nm_kelurahan,
+       nvl(sum(penerimaan.stts),0) as stts,
+       nvl(sum(penerimaan.pokok),0) as pokok
+from (
+    select *
+    from ref_kelurahan
+    --  where kd_kecamatan='080') kel
+    ) kel
+    left join (
+        select
+               kd_propinsi,
+               kd_dati2,
+               kd_kecamatan,
+               kd_kelurahan,
+               count(*) as stts,
+               sum(pbb_yg_harus_dibayar_sppt) as pokok
+        from (
+            select *
+            from view_sppt_op
+            where
+                  --  kd_kecamatan='080'
+                  --  kd_kecamatan=
+              --  and status_pembayaran_sppt <> 1
+              status_pembayaran_sppt <> 1
+              and thn_pajak_sppt between '2010' and '2013'
+            union
+            select *
+            from view_sppt_op
+            where
+                  --  kd_kecamatan='080'
+                  --  kd_kecamatan=
+              --  and thn_pajak_sppt='2014'
+              thn_pajak_sppt between '2010' and '2013'
+              and KD_PROPINSI||KD_DATI2||KD_KECAMATAN||KD_KELURAHAN||KD_BLOK||NO_URUT||KD_JNS_OP||THN_PAJAK_SPPT
+                      IN (
+                          SELECT KD_PROPINSI||KD_DATI2||KD_KECAMATAN||KD_KELURAHAN||KD_BLOK||NO_URUT||KD_JNS_OP||THN_PAJAK_SPPT
+                          FROM PEMBAYARAN_SPPT
+                          --  WHERE kd_kecamatan='080'
+                          WHERE
+                            --  and thn_pajak_sppt='2014'
+                            thn_pajak_sppt between '2010' and '2013'
+                            AND TGL_PEMBAYARAN_SPPT > TO_DATE('31/12/2013','DD/MM/YYYY') ))
+            view_sppt_op
+        group by kd_propinsi,kd_dati2,kd_kecamatan,kd_kelurahan) penerimaan
+        on kel.kd_propinsi=penerimaan.kd_propinsi
+               and kel.kd_dati2=penerimaan.kd_dati2
+               and kel.kd_kecamatan=penerimaan.kd_kecamatan
+               and kel.kd_kelurahan=penerimaan.kd_kelurahan
+group by kel.kd_kelurahan,kel.nm_kelurahan
+order by kel.kd_kelurahan;
+
+```
+
+* kebutuhan verifikasi piutang PBB
+```sql
+
+-- hitung jumlah obyek pajak di kelurahan
+select count(d.KD_PROPINSI), 'jumlah obyek' as ket
+from DAT_OBJEK_PAJAK d
+where d.KD_KECAMATAN = 120 and d.KD_KELURAHAN=004
+union
+-- hitung jumlah sppt di kelurahan
+select count(s.KD_PROPINSI), 'jumlah sppt' as ket
+from SPPT s
+where s.KD_KECAMATAN=120 and KD_KELURAHAN=004 and s.THN_PAJAK_SPPT=2019
+union
+-- hitung fasum di kelurahan
+select count(b.KD_PROPINSI), 'jumlah fasum' as ket
+from DAT_OP_BUMI b
+where b.JNS_BUMI = 4 and b.KD_KECAMATAN =120 and b.KD_KELURAHAN=004;
+
+-- ambil data
+select d.kd_propinsi||'-'||d.kd_dati2||'-'||d.kd_kecamatan||'-'||d.kd_kelurahan||'-'||d.kd_blok||'-'||d.no_urut||'-'||d.KD_JNS_OP as NOP,
+       s.NM_WP_SPPT as NAMA,
+       s.THN_PAJAK_SPPT as THN_PAJAK,
+       s.PBB_YG_HARUS_DIBAYAR_SPPT as TAGIHAN,
+--        s.STATUS_PEMBAYARAN_SPPT as LUNAS,
+       (case when s.STATUS_PEMBAYARAN_SPPT = 1 then 'Lunas' else 'Tidak Lunas' end) as LUNAS,
+--        b.JNS_BUMI as JENIS_BUMI
+       (case
+           when b.JNS_BUMI = 1 then 'TANAH DAN BANGUNAN'
+           when b.JNS_BUMI = 2 then 'TANAH KAVLING SIAP BANGUN'
+           when b.JNS_BUMI = 3 then 'TANAH KOSONG'
+           when b.JNS_BUMI = 4 then 'FASUM' end) as JENIS_BUMI
+    from DAT_OBJEK_PAJAK d
+    left join SPPT s on d.KD_PROPINSI = s.KD_PROPINSI
+                        and d.KD_DATI2 = s.KD_DATI2
+                        and d.KD_KECAMATAN = s.KD_KECAMATAN
+                        and d.KD_KELURAHAN = s.KD_KELURAHAN
+                        and d.KD_BLOK = s.KD_BLOK
+                        and d.NO_URUT = s.NO_URUT
+    left join DAT_OP_BUMI b on d.KD_PROPINSI = b.KD_PROPINSI
+                               and d.KD_DATI2 = b.KD_DATI2
+                               and d.KD_KECAMATAN = b.KD_KECAMATAN
+                               and d.KD_KELURAHAN = b.KD_KELURAHAN
+                               and d.KD_BLOK = b.KD_BLOK
+                               and d.NO_URUT = b.NO_URUT
+    left join PEMBAYARAN_SPPT p on s.KD_PROPINSI = p.KD_PROPINSI
+                                    and s.KD_DATI2 = p.KD_DATI2
+                                    and s.KD_KECAMATAN = p.KD_KECAMATAN
+                                    and s.KD_KELURAHAN = p.KD_KELURAHAN
+                                    and s.KD_BLOK = p.KD_BLOK
+                                    and s.NO_URUT = p.NO_URUT
+                                    and s.THN_PAJAK_SPPT = p.THN_PAJAK_SPPT
+    where d.KD_KECAMATAN = 120 and d.KD_KELURAHAN = 004
+-- order by d.KD_PROPINSI,
+--          d.KD_DATI2,
+--          d.KD_KECAMATAN,
+--          d.KD_KELURAHAN,
+--          d.KD_BLOK,
+--          d.NO_URUT,
+--          d.KD_JNS_OP,
+--          s.THN_PAJAK_SPPT,
+--          b.JNS_BUMI ASC
+union
+select d1.kd_propinsi||'-'||d1.kd_dati2||'-'||d1.kd_kecamatan||'-'||d1.kd_kelurahan||'-'||d1.kd_blok||'-'||d1.no_urut||'-'||d1.KD_JNS_OP as NOP,
+       s1.NM_WP_SPPT as NAMA,
+       s1.THN_PAJAK_SPPT as THN_PAJAK,
+       s1.PBB_YG_HARUS_DIBAYAR_SPPT as TAGIHAN,
+--        s.STATUS_PEMBAYARAN_SPPT as LUNAS,
+       (case when s1.STATUS_PEMBAYARAN_SPPT = 1 then 'Lunas' else 'Tidak Lunas' end) as LUNAS,
+--        b.JNS_BUMI as JENIS_BUMI
+       (case
+           when b1.JNS_BUMI = 1 then 'TANAH DAN BANGUNAN'
+           when b1.JNS_BUMI = 2 then 'TANAH KAVLING SIAP BANGUN'
+           when b1.JNS_BUMI = 3 then 'TANAH KOSONG'
+           when b1.JNS_BUMI = 4 then 'FASUM' end) as JENIS_BUMI
+    from DAT_OBJEK_PAJAK d1
+    left join SPPT s1 on d1.KD_PROPINSI = s1.KD_PROPINSI
+                        and d1.KD_DATI2 = s1.KD_DATI2
+                        and d1.KD_KECAMATAN = s1.KD_KECAMATAN
+                        and d1.KD_KELURAHAN = s1.KD_KELURAHAN
+                        and d1.KD_BLOK = s1.KD_BLOK
+                        and d1.NO_URUT = s1.NO_URUT
+    left join DAT_OP_BUMI b1 on d1.KD_PROPINSI = b1.KD_PROPINSI
+                               and d1.KD_DATI2 = b1.KD_DATI2
+                               and d1.KD_KECAMATAN = b1.KD_KECAMATAN
+                               and d1.KD_KELURAHAN = b1.KD_KELURAHAN
+                               and d1.KD_BLOK = b1.KD_BLOK
+                               and d1.NO_URUT = b1.NO_URUT
+    left join PEMBAYARAN_SPPT p1 on s1.KD_PROPINSI = p1.KD_PROPINSI
+                                    and s1.KD_DATI2 = p1.KD_DATI2
+                                    and s1.KD_KECAMATAN = p1.KD_KECAMATAN
+                                    and s1.KD_KELURAHAN = p1.KD_KELURAHAN
+                                    and s1.KD_BLOK = p1.KD_BLOK
+                                    and s1.NO_URUT = p1.NO_URUT
+                                    and s1.THN_PAJAK_SPPT = p1.THN_PAJAK_SPPT
+    where d1.KD_KECAMATAN = 120 and d1.KD_KELURAHAN = 004 and b1.JNS_BUMI =4
+union
+select d1.kd_propinsi||'-'||d1.kd_dati2||'-'||d1.kd_kecamatan||'-'||d1.kd_kelurahan||'-'||d1.kd_blok||'-'||d1.no_urut||'-'||d1.KD_JNS_OP as NOP,
+       s1.NM_WP_SPPT as NAMA,
+       s1.THN_PAJAK_SPPT as THN_PAJAK,
+       s1.PBB_YG_HARUS_DIBAYAR_SPPT as TAGIHAN,
+--        s.STATUS_PEMBAYARAN_SPPT as LUNAS,
+       (case when s1.STATUS_PEMBAYARAN_SPPT = 1 then 'Lunas' else 'Tidak Lunas' end) as LUNAS,
+--        b.JNS_BUMI as JENIS_BUMI
+       (case
+           when b1.JNS_BUMI = 1 then 'TANAH DAN BANGUNAN'
+           when b1.JNS_BUMI = 2 then 'TANAH KAVLING SIAP BANGUN'
+           when b1.JNS_BUMI = 3 then 'TANAH KOSONG'
+           when b1.JNS_BUMI = 4 then 'FASUM' end) as JENIS_BUMI
+    from DAT_OBJEK_PAJAK d1
+    left join SPPT s1 on d1.KD_PROPINSI = s1.KD_PROPINSI
+                        and d1.KD_DATI2 = s1.KD_DATI2
+                        and d1.KD_KECAMATAN = s1.KD_KECAMATAN
+                        and d1.KD_KELURAHAN = s1.KD_KELURAHAN
+                        and d1.KD_BLOK = s1.KD_BLOK
+                        and d1.NO_URUT = s1.NO_URUT
+    left join DAT_OP_BUMI b1 on d1.KD_PROPINSI = b1.KD_PROPINSI
+                               and d1.KD_DATI2 = b1.KD_DATI2
+                               and d1.KD_KECAMATAN = b1.KD_KECAMATAN
+                               and d1.KD_KELURAHAN = b1.KD_KELURAHAN
+                               and d1.KD_BLOK = b1.KD_BLOK
+                               and d1.NO_URUT = b1.NO_URUT
+    left join PEMBAYARAN_SPPT p1 on s1.KD_PROPINSI = p1.KD_PROPINSI
+                                    and s1.KD_DATI2 = p1.KD_DATI2
+                                    and s1.KD_KECAMATAN = p1.KD_KECAMATAN
+                                    and s1.KD_KELURAHAN = p1.KD_KELURAHAN
+                                    and s1.KD_BLOK = p1.KD_BLOK
+                                    and s1.NO_URUT = p1.NO_URUT
+                                    and s1.THN_PAJAK_SPPT = p1.THN_PAJAK_SPPT
+    where d1.KD_KECAMATAN = 120 and d1.KD_KELURAHAN = 004 and d1.KD_JNS_OP = 9
+order by NOP asc ;
 ```

@@ -476,3 +476,23 @@ from (((
     left join `e-pajak`.`tarif_dasar_pajak` on((`e-pajak`.`sptpd`.`ObyekPajak` = `e-pajak`.`tarif_dasar_pajak`.`NoID`)))
 where ((`e-pajak`.`skp`.`keterangan` = 0) and (`e-pajak`.`skp`.`Aktif` = 1))
 ```
+
+* query untuk laporan jasper studio tampilan SKPRD
+```sql
+SELECT `e-pajak`.`npwpd`.`NPWPD`,
+	`e-pajak`.`sptpd`.`ObyekPajak`,
+	`e-pajak`.`npwpd`.`AlamatWP`,
+	`e-pajak`.`skp`.`Tahun`,
+	`e-pajak`.`skp`.`Tanggal_Terbit`,
+	`e-pajak`.`skp`.`Bulan`,
+	`e-pajak`.`skp`.`DataEntri`,
+	`e-pajak`.`sptpd`.`JenisPajak`,
+	`e-pajak`.`skp`.`Nomor_SKPRD`,
+	`e-pajak`.`sptpd`.`KeteranganPajak`,
+	`e-pajak`.`npwpd`.`NamaWP`
+FROM `e-pajak`.`sptpd`
+	INNER JOIN `e-pajak`.`skp` ON 
+	 `e-pajak`.`skp`.`Nomor_SPTPD` = `e-pajak`.`sptpd`.`NoID` 
+	INNER JOIN `e-pajak`.`npwpd` ON 
+	 `e-pajak`.`npwpd`.`NPWPD` = `e-pajak`.`sptpd`.`NPWPD`
+```
