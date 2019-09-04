@@ -659,3 +659,6 @@ select d1.kd_propinsi||'-'||d1.kd_dati2||'-'||d1.kd_kecamatan||'-'||d1.kd_kelura
     where d1.KD_KECAMATAN = 120 and d1.KD_KELURAHAN = 004 and d1.KD_JNS_OP = 9
 order by NOP asc ;
 ```
+
+* analyze table
+ANALYZE TABLE SPPT COMPUTE STATISTICS ;
