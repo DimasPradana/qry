@@ -661,4 +661,24 @@ order by NOP asc ;
 ```
 
 * analyze table
+```sql
 ANALYZE TABLE SPPT COMPUTE STATISTICS ;
+```
+
+* check yang status di SPPT = 0 dan sudah ada pembayaran di tabel pembayaran
+```sql
+select s.KD_PROPINSI||'-'||s.KD_DATI2||'-'||s.KD_KECAMATAN||'-'||s.KD_KELURAHAN||'-'||s.KD_BLOK||'-'||s.NO_URUT||'-'||s.KD_JNS_OP as NOP,
+       s.STATUS_PEMBAYARAN_SPPT,
+       s.THN_PAJAK_SPPT as thn_sppt,
+       ps.TGL_PEMBAYARAN_SPPT,
+       ps.THN_PAJAK_SPPT as thn_4m_bayar
+from SPPT s
+left join PEMBAYARAN_SPPT ps on ps.KD_PROPINSI = s.KD_PROPINSI and
+                                ps.KD_DATI2 = s.KD_DATI2 and
+                                ps.KD_KECAMATAN = s.KD_KECAMATAN and
+                                ps.KD_KELURAHAN = s.KD_KELURAHAN and
+                                ps.KD_BLOK = s.KD_BLOK and
+                                ps.NO_URUT = s.NO_URUT and
+                                ps.THN_PAJAK_SPPT = s.THN_PAJAK_SPPT
+where s.STATUS_PEMBAYARAN_SPPT = 0 and ps.KD_PROPINSI is not null ;
+```
