@@ -708,5 +708,5 @@ where s.STATUS_PEMBAYARAN_SPPT = 0 and
                               p.NO_URUT = s.NO_URUT and
                               p.THN_PAJAK_SPPT = s.THN_PAJAK_SPPT and
                               p.THN_PEMBENTUKAN = 2013)
-order by nopSPPT;
+order by nopSPPT, thnSPPT asc;
 ```
