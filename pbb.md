@@ -682,3 +682,31 @@ left join PEMBAYARAN_SPPT ps on ps.KD_PROPINSI = s.KD_PROPINSI and
                                 ps.THN_PAJAK_SPPT = s.THN_PAJAK_SPPT
 where s.STATUS_PEMBAYARAN_SPPT = 0 and ps.KD_PROPINSI is not null ;
 ```
+
+* SPPT VS DAFNOM_PIUTANG
+```sql
+/* TODO SPPT VS DAFNOM PIUTANG
+   - cari per kecamatan dengan tahun pajak
+   - jika piutang yg dicari yg tidak ada di dafnom pakai not exist
+   - jika piutang yg dicari yg ada di dafnom pakai exist
+ */
+select s.KD_KECAMATAN||'-'||s.KD_KELURAHAN||'-'||s.KD_BLOK||'-'||s.NO_URUT||'-'||s.KD_JNS_OP as nopSPPT,
+       s.STATUS_PEMBAYARAN_SPPT as statusSPPT,
+       s.THN_PAJAK_SPPT as thnSPPT
+from SPPT s
+where s.STATUS_PEMBAYARAN_SPPT = 0 and
+      s.KD_KECAMATAN = $(kec) and
+      s.THN_PAJAK_SPPT < 2014 and
+      not exists(
+          select *
+          from dafnom_piutang p
+          where p.KD_PROPINSI = s.KD_PROPINSI and
+                              p.KD_DATI2 = s.KD_DATI2 and
+                              p.KD_KECAMATAN = s.KD_KECAMATAN and
+                              p.KD_KELURAHAN = s.KD_KELURAHAN and
+                              p.KD_BLOK = s.KD_BLOK and
+                              p.NO_URUT = s.NO_URUT and
+                              p.THN_PAJAK_SPPT = s.THN_PAJAK_SPPT and
+                              p.THN_PEMBENTUKAN = 2013)
+order by nopSPPT;
+```
