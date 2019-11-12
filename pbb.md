@@ -289,21 +289,44 @@ where kd_kecamatan=150 and status_pembayaran_sppt <> 1
 
 * menu monitoring - tunggakan summmary per kecamatan
 ```sql
-select
-                    kel.kd_kelurahan,
-                    kel.nm_kelurahan,
-                    nvl(sum(penerimaan.stts),0) as stts,
-                    nvl(sum(penerimaan.pokok),0) as pokok
-                    from (select * from ref_kelurahan where kd_kecamatan='080') kel left join
-                    (select kd_propinsi,kd_dati2,kd_kecamatan,kd_kelurahan,count(*) as stts,sum(pbb_yg_harus_dibayar_sppt) as pokok from view_sppt_op
-                    where status_pembayaran_sppt <> 1
-                    and thn_pajak_sppt='2019' and kd_kecamatan='080' group by kd_propinsi,kd_dati2,kd_kecamatan,kd_kelurahan)
-                    penerimaan
-                    on kel.kd_propinsi=penerimaan.kd_propinsi
-                    and kel.kd_dati2=penerimaan.kd_dati2
-                    and kel.kd_kecamatan=penerimaan.kd_kecamatan
-                    and kel.kd_kelurahan=penerimaan.kd_kelurahan
-                    group by kel.kd_kelurahan,kel.nm_kelurahan order by kel.kd_kelurahan
+select kel.kd_kelurahan,
+	kel.nm_kelurahan,
+	nvl(sum(penerimaan.stts),0) as stts,
+	nvl(sum(penerimaan.pokok),0) as pokok
+from (select *
+	from ref_kelurahan
+	where kd_kecamatan='$(kec)'
+	) kel
+left join (select kd_propinsi,
+		kd_dati2,
+		kd_kecamatan,
+		kd_kelurahan,
+		count(*) as stts,
+		sum(pbb_yg_harus_dibayar_sppt) as pokok
+		from (select *
+			from view_sppt_op
+			where kd_kecamatan='$(kec)' and
+				status_pembayaran_sppt <> 1 AND
+				thn_pajak_sppt='$(tahunpajak)'
+			union
+			select *
+			from view_sppt_op
+			where kd_kecamatan='$(kec)' and
+				thn_pajak_sppt='$(tahunpajak)' and
+				KD_PROPINSI||KD_DATI2||KD_KECAMATAN||KD_KELURAHAN||KD_BLOK||NO_URUT||KD_JNS_OP||THN_PAJAK_SPPT IN
+					(SELECT KD_PROPINSI||KD_DATI2||KD_KECAMATAN||KD_KELURAHAN||KD_BLOK||NO_URUT||KD_JNS_OP||THN_PAJAK_SPPT
+					FROM PEMBAYARAN_SPPT
+					WHERE kd_kecamatan='$(kec)' and
+						thn_pajak_sppt='$(tahunpajak)' AND
+						TGL_PEMBAYARAN_SPPT > TO_DATE('$(batastanggal)','DD/MM/YYYY')
+					)
+			) view_sppt_op
+			group by kd_propinsi,kd_dati2,kd_kecamatan,kd_kelurahan
+		) penerimaan on kel.kd_propinsi=penerimaan.kd_propinsi and
+		kel.kd_dati2=penerimaan.kd_dati2 and
+		kel.kd_kecamatan=penerimaan.kd_kecamatan and
+		kel.kd_kelurahan=penerimaan.kd_kelurahan
+group by kel.kd_kelurahan,kel.nm_kelurahan order by kel.kd_kelurahan
 ```
 
 * cari NOP selisih pembayaran yg belum ter-flag oleh sistem
@@ -436,23 +459,27 @@ where s.TGL_PEMBAYARAN_SPPT is not null and s.KD_KECAMATAN=090 and s.THN_PAJAK_S
 -- verifikasi PBB detail kelurahan
 select *
 from view_sppt_op
-where kd_kecamatan=050
-    and kd_kelurahan=005
-    and status_pembayaran_sppt <> 1
-    and thn_pajak_sppt=2014
+where kd_kecamatan='$(kec)' and
+	kd_kelurahan='$(kel)' and
+	status_pembayaran_sppt <> 1 and
+	thn_pajak_sppt='$(tahunpajak)'
 union
 select *
 from view_sppt_op
-where
-    kd_kecamatan=050
-    and kd_kelurahan=005
-    and thn_pajak_sppt=2014
-    AND KD_PROPINSI||KD_DATI2||KD_KECAMATAN||KD_KELURAHAN||KD_BLOK||NO_URUT||KD_JNS_OP||THN_PAJAK_SPPT
-    IN (SELECT
-                KD_PROPINSI||KD_DATI2||KD_KECAMATAN||KD_KELURAHAN||KD_BLOK||NO_URUT||KD_JNS_OP||THN_PAJAK_SPPT
-        FROM PEMBAYARAN_SPPT
-        WHERE kd_kecamatan=050
-                and kd_kelurahan=005 and thn_pajak_sppt=2014 AND TGL_PEMBAYARAN_SPPT > TO_DATE('31/12/2018','DD/MM/YYYY'));
+where kd_kecamatan='$(kec)' and
+kd_kelurahan='$(kel)' and
+thn_pajak_sppt='$(tahunpajak)' and
+KD_PROPINSI||KD_DATI2||KD_KECAMATAN||KD_KELURAHAN||KD_BLOK||NO_URUT||KD_JNS_OP||THN_PAJAK_SPPT IN
+	(SELECT KD_PROPINSI||KD_DATI2||KD_KECAMATAN||KD_KELURAHAN||KD_BLOK||NO_URUT||KD_JNS_OP||THN_PAJAK_SPPT
+	FROM PEMBAYARAN_SPPT
+	WHERE kd_kecamatan='$(kec)' and
+		kd_kelurahan='$(kel)' and
+		thn_pajak_sppt='$(tahunpajak)' AND
+		TGL_PEMBAYARAN_SPPT > TO_DATE('$(batastanggal)','DD/MM/YYYY') )
+```
+
+* verifikasi PBB all kabupaten
+```sql
 -- verifikasi PBB all kabupaten
 select *
 from view_sppt_op
@@ -467,65 +494,6 @@ where
                KD_PROPINSI||KD_DATI2||KD_KECAMATAN||KD_KELURAHAN||KD_BLOK||NO_URUT||KD_JNS_OP||THN_PAJAK_SPPT
         FROM PEMBAYARAN_SPPT
     WHERE TGL_PEMBAYARAN_SPPT > TO_DATE('31/12/2018','DD/MM/YYYY'));
-```
-
-
-* menu monitoring - tunggakan semua kecamatan
-```sql
-
-select
-       kel.kd_kelurahan,
-       kel.nm_kelurahan,
-       nvl(sum(penerimaan.stts),0) as stts,
-       nvl(sum(penerimaan.pokok),0) as pokok
-from (
-    select *
-    from ref_kelurahan
-    --  where kd_kecamatan='080') kel
-    ) kel
-    left join (
-        select
-               kd_propinsi,
-               kd_dati2,
-               kd_kecamatan,
-               kd_kelurahan,
-               count(*) as stts,
-               sum(pbb_yg_harus_dibayar_sppt) as pokok
-        from (
-            select *
-            from view_sppt_op
-            where
-                  --  kd_kecamatan='080'
-                  --  kd_kecamatan=
-              --  and status_pembayaran_sppt <> 1
-              status_pembayaran_sppt <> 1
-              and thn_pajak_sppt between '2010' and '2013'
-            union
-            select *
-            from view_sppt_op
-            where
-                  --  kd_kecamatan='080'
-                  --  kd_kecamatan=
-              --  and thn_pajak_sppt='2014'
-              thn_pajak_sppt between '2010' and '2013'
-              and KD_PROPINSI||KD_DATI2||KD_KECAMATAN||KD_KELURAHAN||KD_BLOK||NO_URUT||KD_JNS_OP||THN_PAJAK_SPPT
-                      IN (
-                          SELECT KD_PROPINSI||KD_DATI2||KD_KECAMATAN||KD_KELURAHAN||KD_BLOK||NO_URUT||KD_JNS_OP||THN_PAJAK_SPPT
-                          FROM PEMBAYARAN_SPPT
-                          --  WHERE kd_kecamatan='080'
-                          WHERE
-                            --  and thn_pajak_sppt='2014'
-                            thn_pajak_sppt between '2010' and '2013'
-                            AND TGL_PEMBAYARAN_SPPT > TO_DATE('31/12/2013','DD/MM/YYYY') ))
-            view_sppt_op
-        group by kd_propinsi,kd_dati2,kd_kecamatan,kd_kelurahan) penerimaan
-        on kel.kd_propinsi=penerimaan.kd_propinsi
-               and kel.kd_dati2=penerimaan.kd_dati2
-               and kel.kd_kecamatan=penerimaan.kd_kecamatan
-               and kel.kd_kelurahan=penerimaan.kd_kelurahan
-group by kel.kd_kelurahan,kel.nm_kelurahan
-order by kel.kd_kelurahan;
-
 ```
 
 * kebutuhan verifikasi piutang PBB
@@ -709,4 +677,34 @@ where s.STATUS_PEMBAYARAN_SPPT = 0 and
                               p.THN_PAJAK_SPPT = s.THN_PAJAK_SPPT and
                               p.THN_PEMBENTUKAN = 2013)
 order by nopSPPT, thnSPPT asc;
+```
+
+* find invalid objek
+```sql
+select
+   owner       c1,
+   object_type c3,
+   object_name c2
+from
+   dba_objects
+where
+   status != 'VALID'
+order by
+   owner,
+   object_type;
+
+select object_name
+         , object_type
+         , status
+    from all_objects
+    where object_name = 'PENETAPAN_TUNGGAL_SPPT';
+
+select name
+         , type
+         , line
+         , position
+         , text
+    from ALL_ERRORS
+    where name like 'PENETAPAN_TUNGGAL_SPPT'
+order by line, position;
 ```
